@@ -1239,7 +1239,7 @@ public class AnnotationFinder implements IAnnotationFinder {
 
         public Annotatable(AnnotatedElement element) {
             for (Annotation annotation : getAnnotations(element)) {
-                annotations.add(new AnnotationInfo(annotation.annotationType().getName()));
+                annotations.add(new AnnotationInfo(annotation.annotationType()));
             }
         }
 
@@ -1567,7 +1567,6 @@ public class AnnotationFinder implements IAnnotationFinder {
     public class ParameterInfo extends Annotatable implements Info {
         private final MethodInfo declaringMethod;
         private final int index;
-        private final List<AnnotationInfo> annotations = new LinkedList<AnnotationInfo>();
         private Parameter<?> parameter;
 
         public ParameterInfo(MethodInfo parent, int index) {
@@ -1629,14 +1628,14 @@ public class AnnotationFinder implements IAnnotationFinder {
             super(field);
             this.declaringClass = info;
             this.name = field.getName();
-            this.type = field.getType().getName();
+            this.type = Type.getType(field.getType()).getClassName(); // normalize handling of array types
             this.field = field;
         }
 
         public FieldInfo(ClassInfo declaringClass, String name, String type) {
             this.declaringClass = declaringClass;
             this.name = name;
-            this.type = type;
+            this.type = Type.getType(type).getClassName();
         }
 
         public String getName() {
