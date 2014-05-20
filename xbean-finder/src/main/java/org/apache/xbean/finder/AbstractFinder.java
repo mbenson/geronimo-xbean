@@ -41,6 +41,7 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.signature.SignatureVisitor;
 
 /**
@@ -796,24 +797,24 @@ public abstract class AbstractFinder implements IAnnotationFinder {
         private final String name;
         private final List<List<AnnotationInfo>> parameterAnnotations = new ArrayList<List<AnnotationInfo>>();
 
-        public MethodInfo(ClassInfo info, Constructor constructor){
+        public MethodInfo(ClassInfo info, Constructor<?> constructor){
             super(constructor);
             this.declaringClass = info;
             this.name = "<init>";
             this.returnType = Void.TYPE.getName();
         }
 
-        public MethodInfo(ClassInfo info, Method method){
+        public MethodInfo(ClassInfo info, Method method) {
             super(method);
             this.declaringClass = info;
             this.name = method.getName();
-            this.returnType = method.getReturnType().getName();
+            this.returnType = Type.getType(method.getReturnType()).getClassName(); // normalize handling of array types
         }
 
-        public MethodInfo(ClassInfo declarignClass, String name, String returnType) {
-            this.declaringClass = declarignClass;
+        public MethodInfo(ClassInfo declaringClass, String name, String descriptor) {
+            this.declaringClass = declaringClass;
             this.name = name;
-            this.returnType = returnType;
+            this.returnType = Type.getMethodType(descriptor).getReturnType().getClassName();
         }
 
         public List<List<AnnotationInfo>> getParameterAnnotations() {
@@ -852,17 +853,17 @@ public abstract class AbstractFinder implements IAnnotationFinder {
         private final String type;
         private final ClassInfo declaringClass;
 
-        public FieldInfo(ClassInfo info, Field field){
+        public FieldInfo(ClassInfo info, Field field) {
             super(field);
             this.declaringClass = info;
             this.name = field.getName();
-            this.type = field.getType().getName();
+            this.type = Type.getType(field.getType()).getClassName(); // normalize handling of array types
         }
 
         public FieldInfo(ClassInfo declaringClass, String name, String type) {
             this.declaringClass = declaringClass;
             this.name = name;
-            this.type = type;
+            this.type = Type.getType(type).getClassName();
         }
 
         public String getName() {
