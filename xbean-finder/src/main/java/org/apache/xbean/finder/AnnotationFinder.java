@@ -1443,23 +1443,24 @@ public class AnnotationFinder implements IAnnotationFinder {
         private final List<ParameterInfo> parameters = new SingleLinkedList<ParameterInfo>();
         private Member method;
 
-        public MethodInfo(ClassInfo info, Constructor constructor) {
+        public MethodInfo(ClassInfo info, Constructor<?> constructor) {
             super(constructor);
             this.declaringClass = info;
             this.name = "<init>";
-            this.descriptor = null;
+            this.descriptor = Type.getConstructorDescriptor(constructor);
+            this.method = constructor;
         }
 
         public MethodInfo(ClassInfo info, Method method) {
             super(method);
             this.declaringClass = info;
             this.name = method.getName();
-            this.descriptor = method.getReturnType().getName();
+            this.descriptor = Type.getMethodDescriptor(method);
             this.method = method;
         }
 
-        public MethodInfo(ClassInfo declarignClass, String name, String descriptor) {
-            this.declaringClass = declarignClass;
+        public MethodInfo(ClassInfo declaringClass, String name, String descriptor) {
+            this.declaringClass = declaringClass;
             this.name = name;
             this.descriptor = descriptor;
         }
@@ -1480,7 +1481,7 @@ public class AnnotationFinder implements IAnnotationFinder {
         }
 
         public boolean isConstructor() {
-            return getName().equals("<init>");
+            return "<init>".equals(getName());
         }
 
         public List<List<AnnotationInfo>> getParameterAnnotations() {
@@ -1505,6 +1506,10 @@ public class AnnotationFinder implements IAnnotationFinder {
             return name;
         }
 
+        public String getDescriptor() {
+            return descriptor;
+        }
+
         public ClassInfo getDeclaringClass() {
             return declaringClass;
         }
@@ -1522,10 +1527,10 @@ public class AnnotationFinder implements IAnnotationFinder {
         }
 
         private Member toMethod() throws ClassNotFoundException {
-            org.objectweb.asm.commons.Method method = new org.objectweb.asm.commons.Method(name, descriptor);
+            final org.objectweb.asm.commons.Method method = new org.objectweb.asm.commons.Method(name, descriptor);
 
             Class<?> clazz = this.declaringClass.get();
-            List<Class> parameterTypes = new LinkedList<Class>();
+            final List<Class<?>> parameterTypes = new LinkedList<Class<?>>();
 
             for (Type type : method.getArgumentTypes()) {
                 String paramType = type.getClassName();
@@ -1536,12 +1541,12 @@ public class AnnotationFinder implements IAnnotationFinder {
                 }
             }
 
-            Class[] parameters = parameterTypes.toArray(new Class[parameterTypes.size()]);
+            final Class<?>[] parameters = parameterTypes.toArray(new Class[parameterTypes.size()]);
 
             IllegalStateException noSuchMethod = null;
             while (clazz != null) {
                 try {
-                    if (name.equals("<init>")) {
+                    if ("<init>".equals(name)) {
                         return clazz.getDeclaredConstructor(parameters);
                     } else {
                         return clazz.getDeclaredMethod(name, parameters);
